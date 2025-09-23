@@ -5,8 +5,11 @@ import open3d as o3d
 from vggt_ba import CudaInference as Vggt, to_point_cloud, bundle_adjustment
 
 
-img_paths = []
-if not img_paths:
+img_paths = [
+    'images/frame_000071.jpg',
+    'images/frame_000087.jpg'
+]
+if img_paths == []:
     RuntimeWarning("Include image paths")
 for path in img_paths:
     if not os.path.exists(path):
