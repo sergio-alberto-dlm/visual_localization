@@ -1,0 +1,18 @@
+name: vggt_ba
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy<2
+  - pillow
+  - huggingface_hub
+  - einops
+  - safetensors
+  - pycolmap=3.11.1
+  - open3d #Optional
+  - pip
+  - pip:
+      - torch
+      - torchvision
