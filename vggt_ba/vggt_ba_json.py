@@ -1,4 +1,5 @@
 import os
+import json
 
 from tqdm import tqdm
 import pandas as pd
@@ -45,24 +46,39 @@ def predict_from_json_entry(model, sample, k=5):
     #predictions['intrinsic_ba'] = ba_results['intrinsic']
     #predictions['extrinsic_ba'] = ba_results['extrinsic']
 
-    return predictions
+    return query_path, predictions
 
 
 def predict_from_json(model, json_path, **kwargs):
     if not os.path.exists(json_path):
         raise ValueError(f"{json_path} does not exist")
     df = pd.read_json(json_path, lines=True)
-    for i in tqdm(range(len(df))):
-        sample = df.iloc[i]
-        predictions = predict_from_json_entry(model, sample, **kwargs)
+    data = [
+        predict_from_json_entry(model, df.iloc[i], **kwargs)
+        for i in tqdm(range(len(df)))
+    ]
+    keys_to_keep = {'extrinsic', 'intrinsic', 'retrieval_rank', 'retrieval_score', 'dataset_paths'}
+
+    json_ready_data = {}
+    for query_path, data_dict in data:
+        filtered_data = {
+            key: data_dict[key].tolist()  # Convert NumPy arrays to lists
+            for key in keys_to_keep if key in data_dict
+        }
+        json_ready_data[query_path] = filtered_data
+
+    # Save to JSON file
+    with open('filtered_data.json', 'w') as f:
+        json.dump(json_ready_data, f, indent=2)
 
 
 def main():
     print("Loading vggt")
     vggt = Vggt()
-    json_path = "/home/emmanuel/Desktop/crocodl_challenge/experiments/dino/visual_localization/data/top10_dinov3.jsonl"
+    json_path = "/home/emmanuel/Desktop/crocodl_challenge/experiments/visual_localization/megaloc.json"
     print("Starting predicting")
-    predict_from_json(vggt, json_path)
+    predictions = predict_from_json(vggt, json_path)
+    print(predictions.keys())
 
 
 if __name__ == '__main__':
