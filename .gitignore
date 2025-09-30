@@ -3,3 +3,4 @@ __pycache__/
 *.json
 outputs
 .venv
+__pycache__/
