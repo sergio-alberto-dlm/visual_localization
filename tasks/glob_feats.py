@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import argparse
 from pathlib import Path
 from typing import Dict, List, Any
@@ -7,7 +10,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from dataset import make_transform
+
+from utils.dataset import make_transform
 
 # ------------------------------------------------------------
 # Utilities
@@ -78,7 +82,7 @@ def main():
 
     # ---- Import your dataset pieces from your project ----
     try:
-        from dataset import IOSMapDataset, collate_map  # ensure PYTHONPATH if needed
+        from utils.dataset import IOSMapDataset, collate_map  # ensure PYTHONPATH if needed
     except Exception as e:
         print("[ERROR] Could not import IOSMapDataset/collate_map from dataset.py")
         print("Make sure this script runs from your project root or set PYTHONPATH.")
@@ -105,9 +109,10 @@ def main():
 
     # ---- Model ----
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    model = torch.hub.load(
-        args.repo_dir, "dinov3_vitb16", source="local", weights=args.weights
-    ).to(device)
+    #model = torch.hub.load(
+    #    args.repo_dir, "dinov3_vitb16", source="local", weights=args.weights
+    #).to(device)
+    model = torch.hub.load("gmberton/MegaLoc", "get_trained_model").to(device)
     model.eval()
 
     use_amp = (device.type == "cuda") and (not args.no_amp)

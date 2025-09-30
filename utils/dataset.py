@@ -13,12 +13,12 @@ from PIL import Image
 from utils.pose_utils import quat_to_R, invert_se3
 
 # --------------------------- standard image transf ---------------------------
-def make_transform(resize_size: int = 224):
+def make_transform(resize_size: int = 322):
     to_tensor = transforms.ToTensor()
     resize = transforms.Resize((resize_size, resize_size), antialias=True)
     normalize = transforms.Normalize(
-        mean=(0.430, 0.411, 0.296),
-        std=(0.213, 0.156, 0.143),
+        mean=(0.485, 0.456, 0.406),
+        std=(0.229, 0.224, 0.225),
     )
     return transforms.Compose([to_tensor, resize, normalize])
 

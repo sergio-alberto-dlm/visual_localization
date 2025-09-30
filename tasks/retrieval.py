@@ -9,6 +9,7 @@ from typing import List, Dict, Tuple, Any
 import numpy as np
 import torch 
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from utils.geo_utils import l2_normalize
 from utils.system_utils import try_import_faiss, default_num_workers
@@ -126,7 +127,7 @@ def cosine_topk_chunked(
     use_cuda = torch.cuda.is_available() and device.startswith("cuda")
     dev = torch.device(device if use_cuda else "cpu")
 
-    Q_t = torch.from_numpy(Q.astype(np.float32, copy=False).to(dev, non_blocking=True))
+    Q_t = torch.from_numpy(Q.astype(np.float32, copy=False)).to(dev, non_blocking=True)
     N = X.shape[0]
     scores_all = torch.full((Q_t.shape[0], topk), -1e9, device=dev)
     idx_all = torch.full((Q_t.shape[0], topk), -1, dtype=torch.int64, device=dev)
@@ -247,7 +248,7 @@ def main():
     # Retrieval loop
     # -------------------
     with open(out_path, "w", encoding="utf-8") as fout, torch.inference_mode():
-        for batch in qloader:
+        for batch in tqdm(qloader):
             imgs: torch.Tensor = batch["image"].to(device, non_blocking=True) # (B, 3, H, W)
             B = imgs.shape[0]
             paths: List[str] = batch.get("path", [""] * B)
