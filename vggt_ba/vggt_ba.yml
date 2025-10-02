@@ -15,6 +15,7 @@ dependencies:
   - uvicorn
   - fastapi
   - pip
+  - evo
   - pip:
       - torch
       - torchvision
