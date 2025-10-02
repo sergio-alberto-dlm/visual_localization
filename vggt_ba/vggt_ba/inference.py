@@ -1,7 +1,9 @@
 import os
 import gc
+import pickle
 
 import torch
+import requests
 
 from vggt.models.vggt import VGGT
 from vggt.utils.load_fn import load_and_preprocess_images
@@ -30,13 +32,22 @@ class CudaInference:
         del self.model
         self.model = None
 
-    def run(self, img_path_list: list) -> dict:
+    def run(self, img_path_list: list = None, img_list: list = []) -> dict:
         if self.model is None:
             raise ValueError("Model must be loaded first.")
+        
+        if img_path_list and img_list:
+            raise ValueError("Only one of the following args must be passed: img_path_list, img_list")
         gc.collect()
         torch.cuda.empty_cache()
 
-        images = load_and_preprocess_images(img_path_list).to(device)
+        if img_path_list:
+            images = load_and_preprocess_images(img_path_list).to(device)
+        elif img_list:
+            images = img_list.to(device)
+        else:
+            raise ValueError("At least one of the following args must be passed: img_path_list, img_list")
+
         dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
         with torch.no_grad():
             with torch.amp.autocast(device, dtype=dtype):
@@ -58,4 +69,29 @@ class CudaInference:
         predictions["world_points_from_depth"] = world_points
         predictions["image_names"] = [os.path.basename(path) for path in img_path_list]
 
+        return predictions
+
+
+
+class ApiInference:
+    def __init__(self, url: str = 'http://127.0.0.1:8000') -> None:
+        self.url = url
+
+    def run(self, img_path_list: list = None, img_list: list = []) -> dict:
+        if img_path_list and img_list:
+            raise ValueError("Only one of the following args must be passed: img_path_list, img_list")
+        if img_path_list:
+            payload = pickle.dumps(img_path_list) 
+        elif img_list:
+            payload = pickle.dumps(img_list)
+        else:
+            raise ValueError("At least one of the following args must be passed: img_path_list, img_list")
+        print("Sending data to VGGT. This may take some minutes")
+        response = requests.post(
+            self.url + "/predict",
+            data = payload,
+            headers={"Content-Type": "application/octet-stream"}
+        )
+        print("Received predictions outputs from VGGT")
+        predictions = pickle.loads(response.content)
         return predictions

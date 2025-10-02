@@ -12,6 +12,8 @@ dependencies:
   - safetensors
   - pycolmap=3.11.1
   - open3d #Optional
+  - uvicorn
+  - fastapi
   - pip
   - pip:
       - torch
