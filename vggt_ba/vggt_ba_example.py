@@ -22,6 +22,8 @@ def main():
     print("Running inference")
     predictions = vggt.run(img_paths)
     print("Rinning bundle adjsutment to enhance camera properties estimation")
+    predictions['image_names'] = [os.path.basename(path) for path in img_paths]
+
     ba_results = bundle_adjustment(predictions)
 
     print(ba_results)

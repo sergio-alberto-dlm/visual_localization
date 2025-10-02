@@ -10,6 +10,8 @@ from vggt.utils.load_fn import load_and_preprocess_images
 from vggt.utils.pose_enc import pose_encoding_to_extri_intri
 from vggt.utils.geometry import unproject_depth_map_to_point_map
 
+from .load_fn import preprocess_images
+
 
 device = "cuda"
 
@@ -32,19 +34,19 @@ class CudaInference:
         del self.model
         self.model = None
 
-    def run(self, img_path_list: list = None, img_list: list = []) -> dict:
+    def run(self, img_path_list: list = None, img_list: list = None) -> dict:
         if self.model is None:
             raise ValueError("Model must be loaded first.")
         
-        if img_path_list and img_list:
+        if img_path_list is not None and img_list is not None:
             raise ValueError("Only one of the following args must be passed: img_path_list, img_list")
         gc.collect()
         torch.cuda.empty_cache()
 
-        if img_path_list:
+        if img_path_list is not None:
             images = load_and_preprocess_images(img_path_list).to(device)
-        elif img_list:
-            images = img_list.to(device)
+        elif img_list is not None:
+            images = preprocess_images(img_list).to(device)
         else:
             raise ValueError("At least one of the following args must be passed: img_path_list, img_list")
 
@@ -67,7 +69,6 @@ class CudaInference:
         depth_map = predictions["depth"]  # (S, H, W, 1)
         world_points = unproject_depth_map_to_point_map(depth_map, predictions["extrinsic"], predictions["intrinsic"])
         predictions["world_points_from_depth"] = world_points
-        predictions["image_names"] = [os.path.basename(path) for path in img_path_list]
 
         return predictions
 
@@ -77,12 +78,12 @@ class ApiInference:
     def __init__(self, url: str = 'http://127.0.0.1:8000') -> None:
         self.url = url
 
-    def run(self, img_path_list: list = None, img_list: list = []) -> dict:
-        if img_path_list and img_list:
+    def run(self, img_path_list: list = None, img_list: list = None) -> dict:
+        if img_path_list is not None and img_list is not None:
             raise ValueError("Only one of the following args must be passed: img_path_list, img_list")
-        if img_path_list:
+        if img_path_list is not None:
             payload = pickle.dumps(img_path_list) 
-        elif img_list:
+        elif img_list is not None:
             payload = pickle.dumps(img_list)
         else:
             raise ValueError("At least one of the following args must be passed: img_path_list, img_list")

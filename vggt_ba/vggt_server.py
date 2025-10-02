@@ -18,8 +18,10 @@ app = FastAPI()
 async def predict(request: Request):
     body = await request.body()
     imgs = pickle.loads(body)
-    print(imgs)
-    predictions = model.run(imgs)
+    if isinstance(imgs[0], str):
+        predictions = model.run(imgs)
+    else:
+        predictions = model.run(img_list = imgs)
     response = Response(
         content = pickle.dumps(predictions),
         media_type = "application/octet-stream"

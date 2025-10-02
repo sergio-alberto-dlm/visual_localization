@@ -41,7 +41,9 @@ def predict_from_json_entry(model, sample, k=5):
     predictions['retrieval_rank'] = ranks
     predictions['retrieval_score'] = score
     predictions['dataset_paths'] = vggt_input_paths
-
+    predictions['image_names'] = [
+        os.path.basename(path) for path in vggt_input_abspaths
+    ]
     #ba_results = bundle_adjustment(predictions)    
     #predictions['intrinsic_ba'] = ba_results['intrinsic']
     #predictions['extrinsic_ba'] = ba_results['extrinsic']
