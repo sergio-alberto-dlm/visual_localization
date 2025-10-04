@@ -32,17 +32,18 @@ def extract_and_save(
     for i in tqdm(range(number_of_images)):
         rel_dump_path = dataset_img_paths[i]
         abs_img_path = abs_img_paths[i]
-        img = [Image.open(abs_img_path)]
-        feats = superpoint.run(img)[0]
 
         dumproot_to_npz_path = os.path.join(rel_dump_path, 'local_feats.npz')
 
         npz_abspath = os.path.join(root_dump_path, dumproot_to_npz_path)
         os.makedirs(os.path.dirname(npz_abspath), exist_ok=True)
+
+        img = [Image.open(abs_img_path)]
+        feats = superpoint.run(img)[0]
         np.savez(npz_abspath, **feats)
 
     dumproot_npz_paths = [
-        os.path.join(os.path.dirname(ds_img_path), 'local_feats.npz')
+        os.path.join(ds_img_path, 'local_feats.npz')
         for ds_img_path in dataset_img_paths
     ]
 
