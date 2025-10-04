@@ -50,7 +50,7 @@ def main():
         image_to_feats_df = extract_and_save(
             data=df_like,
             dataset_path = input_dataset_path,
-            root_dump_path = session_dump_path
+            root_dump_path = dump_path
         )
         output_csv_path = os.path.join(session_dump_path, 'local_feats.csv')
         print(f"Dumping local features into {output_csv_path}")
