@@ -35,8 +35,7 @@ def extract_and_save(
         img = [Image.open(abs_img_path)]
         feats = superpoint.run(img)[0]
 
-        dumproot_to_npz_dirname = os.path.dirname(rel_dump_path)
-        dumproot_to_npz_path = os.path.join(dumproot_to_npz_dirname, 'local_feats.npz')
+        dumproot_to_npz_path = os.path.join(rel_dump_path, 'local_feats.npz')
 
         npz_abspath = os.path.join(root_dump_path, dumproot_to_npz_path)
         os.makedirs(os.path.dirname(npz_abspath), exist_ok=True)
