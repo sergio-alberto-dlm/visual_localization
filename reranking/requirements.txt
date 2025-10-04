@@ -1,0 +1,7 @@
+tqdm
+torch
+torchvision
+opencv-python
+matplotlib
+lightglue @ git+https://github.com/cvg/LightGlue/@main
+jupyter
