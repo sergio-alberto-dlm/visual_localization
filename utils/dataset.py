@@ -11,7 +11,7 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 
-from pose_utils import quat_to_R, invert_se3
+from utils.pose_utils import quat_to_R, invert_se3
 from collections import namedtuple
 
 # --------------------------- standard image transf ---------------------------
