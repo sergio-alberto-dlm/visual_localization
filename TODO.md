@@ -1,4 +1,4 @@
-- [ ] Image retrieval re-ranking: SuperPoint + LightGlue + RANSAC
+- [x] Image retrieval re-ranking: SuperPoint + LightGlue + RANSAC
 - [ ] Use depth conf or 3dpoints conf from vggt to filterout predictions to take images for bundle adjustment and Umeyama's algorithm
 - [ ] Run MegaLoc once again but with larger resolution and take best 20
 - [ ] Check how to dump estimated poses, i.e., the format
