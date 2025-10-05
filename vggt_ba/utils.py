@@ -33,8 +33,6 @@ def read_query_with_refs(sample):
         for i in range(1, 11)
     ])
 
-    score = [1.0] + score
-
     return {
         'query_path': query_path,
         'retrieval': {
