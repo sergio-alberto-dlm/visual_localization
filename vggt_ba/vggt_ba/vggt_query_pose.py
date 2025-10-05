@@ -24,7 +24,7 @@ class VggtQueryPoseEstimation:
         self,
         query_img_path: os.PathLike,
         ref_img_paths: List[os.PathLike],
-        ref_img_poses: List|np.array,
+        ref_img_poses: np.array,
         dataset_path: os.PathLike,
         sample_size: int = 4
     ) -> dict:
