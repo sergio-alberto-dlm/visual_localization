@@ -5,10 +5,12 @@ from PIL import Image
 import numpy as np
 import torch
 import cv2
+import pandas as pd
 
 from lightglue import SuperPoint
 from lightglue.utils import rbd
 
+from . import utils as rr_utils
 
 
 # Helper to convert PIL to torch.Tensor usable by LightGlue / SuperPoint
@@ -35,7 +37,7 @@ def pil_to_torch_rgb(
 
 
 class Extractor:
-    def __init__(self, max_num_keypoints: int=4096):
+    def __init__(self, max_num_keypoints: int=2048):
         self.superpoint = None
         self.max_num_keypoints = max_num_keypoints
         self.wakeup()
@@ -59,3 +61,56 @@ class Extractor:
             features_list.append(feats)
 
         return features_list
+
+
+class SessionDumpedFeatures:
+    def __init__(self, dump_dir: os.PathLike, location: str, session: str) -> None:
+        self.dump_dir = dump_dir
+        self.location = location.upper()
+        self.session = session
+        self.session_path = os.path.join(
+            self.dump_dir, self.location, 'sessions', self.session
+        )
+        csv_path = os.path.join(self.session_path, 'local_feats.csv')
+        self.df = pd.read_csv(csv_path)
+
+    def __getitem__(self, dataset_to_img_path: os.PathLike) -> dict:
+        row = self.df[self.df['dataset_to_image_path'] == dataset_to_img_path]
+        if len(row) == 0:
+            raise ValueError(f"{dataset_to_img_path} not found in {self.session_path}")
+        
+        npz_rel_path = row['outputdir_to_feats_path'].values[0]
+        npz_abs_path = os.path.join(self.dump_dir,  npz_rel_path)
+        feats = np.load(npz_abs_path)
+
+        return feats
+
+    def __repr__(self) -> str:
+        return f"SessionDumpedFeatures({self.location}/sessions/{self.session})"
+
+
+class DumpedFeatures:
+    def __init__(self, dump_dir: os.PathLike) -> None:
+        self.dump_dir = dump_dir
+        all_combos = [
+            (location, session)
+            for location in rr_utils.LOCATIONS
+            for session in rr_utils.SESSIONS
+        ]
+
+        self.sessions_features = {
+            DumpedFeatures.key(location, session):\
+                SessionDumpedFeatures(self.dump_dir, location, session)
+            for location, session in all_combos
+        }
+
+    @staticmethod
+    def key(location: str, session: str):
+        return f"{location.upper()}/sessions/{session}"
+
+    def __getitem__(self, dataset_to_img_path: os.PathLike) -> dict:
+        location, session = rr_utils.get_location_and_session(dataset_to_img_path)
+        key = DumpedFeatures.key(location, session)
+        features_map = self.sessions_features[key]
+
+        return features_map[dataset_to_img_path]
