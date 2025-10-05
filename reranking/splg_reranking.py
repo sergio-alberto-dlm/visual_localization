@@ -8,23 +8,26 @@ from typing import List, Tuple
 from lightglue import LightGlue, SuperPoint
 from lightglue.utils import load_image, rbd
 
-# Helper to convert PIL to torch.Tensor usable by LightGlue / SuperPoint
-def pil_to_torch_rgb(pil_img: Image.Image, device: torch.device, resize_max: int = None) -> torch.Tensor:
+
+def pil_to_torch_gray(pil_img: Image.Image, device: torch.device, resize_max: int = None) -> torch.Tensor:
     """
-    Convert PIL Image to torch.Tensor (3,H,W), normalized [0,1], optionally resize so max edge <= resize_max.
+    Convert PIL Image to grayscale torch.Tensor (1,H,W), normalized [0,1], optionally resize so max edge <= resize_max.
     """
-    img = pil_img.convert('RGB')
-    img_np = np.array(img).astype(np.float32) / 255.0  # H x W x 3
-    # maybe resize
+    img = pil_img.convert('L')  # Convert to grayscale
+    img_np = np.array(img).astype(np.float32) / 255.0  # H x W
+
+    # Resize if needed
     if resize_max is not None:
         h, w = img_np.shape[:2]
         scale = resize_max / max(h, w)
         if scale < 1.0:
             new_size = (int(w * scale), int(h * scale))
             img_np = cv2.resize(img_np, new_size, interpolation=cv2.INTER_LINEAR)
-    # to torch and permute
-    img_t = torch.from_numpy(img_np).permute(2,0,1).unsqueeze(0).to(device)  # shape (1,3,H,W)
+
+    # Convert to torch tensor (1, 1, H, W)
+    img_t = torch.from_numpy(img_np).unsqueeze(0).unsqueeze(0).to(device)  # shape (1,1,H,W)
     return img_t
+
 
 def extract_matches_sp_lg(img0: torch.Tensor, img1: torch.Tensor,
                           extractor: SuperPoint, matcher: LightGlue
@@ -49,6 +52,7 @@ def extract_matches_sp_lg(img0: torch.Tensor, img1: torch.Tensor,
 
     return keypts0, keypts1
 
+
 def compute_homography_inlier_count(pts0: np.ndarray, pts1: np.ndarray,
                                    ransac_thresh: float = 4.0) -> int:
     """
@@ -62,6 +66,7 @@ def compute_homography_inlier_count(pts0: np.ndarray, pts1: np.ndarray,
         return 0
     inlier_count = int(mask.sum())
     return inlier_count
+
 
 def rerank_with_sp_lg_ransac(query_img: Image.Image,
                              ref_imgs: List[Image.Image],
@@ -86,12 +91,12 @@ def rerank_with_sp_lg_ransac(query_img: Image.Image,
     matcher = LightGlue(features='superpoint').eval().to(device)
 
     # Convert query image
-    q_img_t = pil_to_torch_rgb(query_img, device, resize_max=resize_max)
+    q_img_t = pil_to_torch_gray(query_img, device, resize_max=resize_max)
 
     inlier_counts = []
 
     for ref_img in ref_imgs:
-        r_img_t = pil_to_torch_rgb(ref_img, device, resize_max=resize_max)
+        r_img_t = pil_to_torch_gray(ref_img, device, resize_max=resize_max)
 
         # Extract matches
         pts_q, pts_r = extract_matches_sp_lg(q_img_t, r_img_t, extractor, matcher)

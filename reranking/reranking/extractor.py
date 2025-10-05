@@ -14,25 +14,23 @@ from . import utils as rr_utils
 
 
 # Helper to convert PIL to torch.Tensor usable by LightGlue / SuperPoint
-def pil_to_torch_rgb(
-    pil_img: Image.Image,
-    device: torch.device = 'cuda',
-    resize_max: int = 2048
-) -> torch.Tensor:
+def pil_to_torch_gray(pil_img: Image.Image, resize_max: int = 2048) -> torch.Tensor:
     """
-    Convert PIL Image to torch.Tensor (3,H,W), normalized [0,1], optionally resize so max edge <= resize_max.
+    Convert PIL Image to grayscale torch.Tensor (1,H,W), normalized [0,1], optionally resize so max edge <= resize_max.
     """
-    img = pil_img.convert('RGB')
-    img_np = np.array(img).astype(np.float32) / 255.0  # H x W x 3
-    # maybe resize
+    img = pil_img.convert('L')  # Convert to grayscale
+    img_np = np.array(img).astype(np.float32) / 255.0  # H x W
+
+    # Resize if needed
     if resize_max is not None:
         h, w = img_np.shape[:2]
         scale = resize_max / max(h, w)
         if scale < 1.0:
             new_size = (int(w * scale), int(h * scale))
             img_np = cv2.resize(img_np, new_size, interpolation=cv2.INTER_LINEAR)
-    # to torch and permute
-    img_t = torch.from_numpy(img_np).permute(2,0,1).unsqueeze(0).to(device)  # shape (1,3,H,W)
+
+    # Convert to torch tensor (1, 1, H, W)
+    img_t = torch.from_numpy(img_np).unsqueeze(0).unsqueeze(0).to('cuda')  # shape (1,1,H,W)
     return img_t
 
 
@@ -49,14 +47,12 @@ class Extractor:
     def run(self, image_list: List[Image.Image]) -> List[dict]:
         features_list = []
         for img in image_list:
-            img_tensor = pil_to_torch_rgb(img)
+            img_tensor = pil_to_torch_gray(img)
 
             with torch.no_grad():
                 feats = self.superpoint.extract(img_tensor)
 
-            feats = {
-                k: v.cpu() for k, v in feats.items()
-            }
+            feats = {k: v.cpu() for k, v in feats.items()}
 
             features_list.append(feats)
 
