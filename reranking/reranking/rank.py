@@ -30,7 +30,6 @@ class LightGlueRanker:
             reverse=True
         )
 
-        print(ranks, inliers_cnt)
         return {
             'permutation': ranks,
             'inliers_cnt': inliers_cnt
