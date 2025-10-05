@@ -87,12 +87,10 @@ class ApiInference:
             payload = pickle.dumps(img_list)
         else:
             raise ValueError("At least one of the following args must be passed: img_path_list, img_list")
-        print("Sending data to VGGT. This may take some minutes")
         response = requests.post(
             self.url + "/predict",
             data = payload,
             headers={"Content-Type": "application/octet-stream"}
         )
-        print("Received predictions outputs from VGGT")
         predictions = pickle.loads(response.content)
         return predictions

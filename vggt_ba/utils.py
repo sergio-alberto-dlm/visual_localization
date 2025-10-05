@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+
 def open_json_retrieval(path):
     df = pd.read_json(path)
     return df
@@ -27,10 +28,10 @@ def read_query_with_refs(sample):
         query_topk[i].get('score')
         for i in range(1, 11)
     ]
-    ref_poses = [
+    ref_poses = np.array([
         query_topk[i].get('Tws')
         for i in range(1, 11)
-    ]
+    ])
 
     score = [1.0] + score
 
@@ -90,3 +91,36 @@ def plot_confidence_matrices_mpl(matrices):
 
     plt.tight_layout(rect=[0, 0, 0.9, 1])
     plt.show()
+
+
+def visualize_camera_trajectories(trajectories, scale=0.2):
+    """
+    trajectories: List of trajectories
+                  Each trajectory is a list of 4x4 pose matrices (numpy arrays)
+    scale: Size of the coordinate frame (camera model)
+    """
+    import open3d as o3d
+
+    vis_geometries = []
+
+    for i, traj in enumerate(trajectories):
+        color = [random.random(), random.random(), random.random()]
+
+        for pose in traj:
+            # Create a coordinate frame
+            cam = o3d.geometry.TriangleMesh.create_coordinate_frame(size=scale)
+            cam.transform(pose)  # Place it using the 4x4 pose
+            vis_geometries.append(cam)
+
+        # Optionally connect camera centers with a line
+        points = [pose[:3, 3] for pose in traj]
+        lines = [[j, j+1] for j in range(len(points)-1)]
+
+        line_set = o3d.geometry.LineSet()
+        line_set.points = o3d.utility.Vector3dVector(points)
+        line_set.lines = o3d.utility.Vector2iVector(lines)
+        line_set.colors = o3d.utility.Vector3dVector([color for _ in lines])
+
+        vis_geometries.append(line_set)
+
+    o3d.visualization.draw_geometries(vis_geometries)
