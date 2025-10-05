@@ -6,33 +6,43 @@ import numpy as np
 
 
 def open_json_retrieval(path):
-    df = pd.read_json(path, lines=True)
+    df = pd.read_json(path)
     return df
 
 
 def read_query_with_refs(sample):
-    query_path = sample['query_path']
+    query_path = sample['path']
     query_topk = sample['topk']
     query_topk = {d['rank']: d for d in query_topk}
 
-    vggt_input_ref_paths = [
-        query_topk[i].get('abs_path')
-        for i in range(1, 10)
+    ref_paths = [
+        query_topk[i].get('path')
+        for i in range(1, 11)
     ]
     ranks = [
         query_topk[i].get('rank')
-        for i in range(1, 10)
+        for i in range(1, 11)
     ]
     score = [
         query_topk[i].get('score')
-        for i in range(1, 10)
+        for i in range(1, 11)
+    ]
+    ref_poses = [
+        query_topk[i].get('Tws')
+        for i in range(1, 11)
     ]
 
-    vggt_input_paths =  [query_path] + vggt_input_ref_paths
-    ranks = [0.0] + ranks
     score = [1.0] + score
 
-    return vggt_input_paths, ranks, score
+    return {
+        'query_path': query_path,
+        'retrieval': {
+            'ranks': ranks,
+            'scores': score,
+            'ref_paths': ref_paths,
+            'ref_poses': ref_poses
+        }
+    }
 
 
 class JsonRetrieval:
