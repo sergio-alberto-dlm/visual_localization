@@ -1,0 +1,9 @@
+torch
+torchvision
+numpy<2
+pillow
+huggingface_hub
+einops
+safetensors
+evo
+open3d
