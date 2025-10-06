@@ -10,7 +10,7 @@ from vggt.utils.load_fn import load_and_preprocess_images
 from vggt.utils.pose_enc import pose_encoding_to_extri_intri
 from vggt.utils.geometry import unproject_depth_map_to_point_map
 
-from .load_fn import preprocess_images
+from .load_fn import preprocess_images, check_aspect_ratios, load_images, crop_images_to_square
 
 
 device = "cuda"
@@ -44,7 +44,13 @@ class CudaInference:
         torch.cuda.empty_cache()
 
         if img_path_list is not None:
-            images = load_and_preprocess_images(img_path_list).to(device)
+            all_same_aspect_ration = check_aspect_ratios(img_path_list)
+            if all_same_aspect_ration:
+                images = load_and_preprocess_images(img_path_list).to(device)
+            else:
+                images = load_images(img_path_list)
+                images = crop_images_to_square(images)
+                images = preprocess_images(images).to(device)
         elif img_list is not None:
             images = preprocess_images(img_list).to(device)
         else:
