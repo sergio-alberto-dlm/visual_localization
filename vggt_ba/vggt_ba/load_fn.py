@@ -5,6 +5,8 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of vggt main repo
 
+from typing import List
+from fractions import Fraction
 
 import torch
 from PIL import Image
@@ -201,3 +203,46 @@ def preprocess_images_square(pil_images, target_size=1024):
     original_coords = torch.from_numpy(np.array(original_coords)).float()
 
     return images, original_coords
+
+
+def check_aspect_ratios(image_paths: List[str]) -> bool:
+    """
+    Check if all images have the same aspect ratio.
+
+    Parameters:
+        image_paths (List[str]): List of paths to image files.
+
+    Returns:
+        bool: True if all images have the same aspect ratio, False otherwise.
+    """
+    if not image_paths:
+        raise ValueError("No image paths provided.")
+
+    aspect_ratios = []
+
+    for path in image_paths:
+        with Image.open(path) as img:
+            width, height = img.size
+            aspect_ratio = Fraction(width, height).limit_denominator()
+            aspect_ratios.append(aspect_ratio)
+
+    first_ratio = aspect_ratios[0]
+    all_same = all(ratio == first_ratio for ratio in aspect_ratios)
+
+    return all_same
+
+
+def center_crop_square(image: Image.Image) -> Image.Image:
+    width, height = image.size
+    min_dim = min(width, height)
+
+    left = (width - min_dim) // 2
+    top = (height - min_dim) // 2
+    right = left + min_dim
+    bottom = top + min_dim
+
+    return image.crop((left, top, right, bottom))
+
+
+def crop_images_to_square(images):
+    return [center_crop_square(img) for img in images]
