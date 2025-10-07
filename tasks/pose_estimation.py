@@ -51,9 +51,10 @@ def main():
         topk = query['retrieval']
         results = pose_estimator.get_query_pose(
             query['query_path'],
-            topk['ref_paths'][:6],
-            topk['ref_poses'][:6],
+            topk['ref_paths'][:5],
+            topk['ref_poses'][:5],
             args.dataset_path,
+            sample_size = 4
         )
         all_results.append(results)
 
