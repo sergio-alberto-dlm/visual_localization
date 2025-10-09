@@ -59,7 +59,7 @@ def extract_one_subsession(
       features: (N, D)
       manifest_rows: list of (device_id, sensor_id, timestamp, abs_path)
     """
-    ds = MapDS(sessions_root, transform=make_transform(), subsession=subsession, return_image=True)
+    ds = MapDS(sessions_root, transform=make_transform(resize_size=322), subsession=subsession, return_image=True)
     # stable order
     ds.samples.sort(key=lambda d: (d.timestamp, d.device_id))
 
