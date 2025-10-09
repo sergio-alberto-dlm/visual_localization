@@ -19,7 +19,15 @@ def quat_to_R(qw: float, qx: float, qy: float, qz: float) -> torch.Tensor:
 def invert_se3(T: torch.Tensor) -> torch.Tensor:
     R = T[:3, :3]
     t = T[:3, 3]
-    Ti = torch.eye(4, dtype=T.dtype)
+    Ti = torch.eye(4, dtype=T.dtype).to(T.device)
+    Ti[:3, :3] = R.T
+    Ti[:3, 3] = -R.T @ t
+    return Ti
+
+def invert_se3_np(T: np.ndarray) -> np.ndarray:
+    R = T[:3, :3]
+    t = T[:3, 3]
+    Ti = np.eye(4, dtype=T.dtype)
     Ti[:3, :3] = R.T
     Ti[:3, 3] = -R.T @ t
     return Ti
@@ -161,3 +169,66 @@ def parse_trajectories_txt(path):
         tx, ty, tz     = map(float, r[6:9])
         out.append(TrajRow(ts, device_id, _q_normalize([qw,qx,qy,qz]), np.array([tx,ty,tz], dtype=np.float64)))
     return out
+
+def skew_sym_mat(x):
+    device = x.device
+    dtype = x.dtype
+    ssm = torch.zeros(3, 3, device=device, dtype=dtype)
+    ssm[0, 1] = -x[2]
+    ssm[0, 2] = x[1]
+    ssm[1, 0] = x[2]
+    ssm[1, 2] = -x[0]
+    ssm[2, 0] = -x[1]
+    ssm[2, 1] = x[0]
+    return ssm
+
+
+def SO3_exp(theta):
+    device = theta.device
+    dtype = theta.dtype
+
+    W = skew_sym_mat(theta)
+    W2 = W @ W
+    angle = torch.norm(theta)
+    I = torch.eye(3, device=device, dtype=dtype)
+    if angle < 1e-5:
+        return I + W + 0.5 * W2
+    else:
+        return (
+            I
+            + (torch.sin(angle) / angle) * W
+            + ((1 - torch.cos(angle)) / (angle**2)) * W2
+        )
+
+
+def V(theta):
+    dtype = theta.dtype
+    device = theta.device
+    I = torch.eye(3, device=device, dtype=dtype)
+    W = skew_sym_mat(theta)
+    W2 = W @ W
+    angle = torch.norm(theta)
+    if angle < 1e-5:
+        V = I + 0.5 * W + (1.0 / 6.0) * W2
+    else:
+        V = (
+            I
+            + W * ((1.0 - torch.cos(angle)) / (angle**2))
+            + W2 * ((angle - torch.sin(angle)) / (angle**3))
+        )
+    return V
+
+
+def SE3_exp(tau):
+    dtype = tau.dtype
+    device = tau.device
+
+    rho = tau[:3]
+    theta = tau[3:]
+    R = SO3_exp(theta)
+    t = V(theta) @ rho
+
+    T = torch.eye(4, device=device, dtype=dtype)
+    T[:3, :3] = R
+    T[:3, 3] = t
+    return T
