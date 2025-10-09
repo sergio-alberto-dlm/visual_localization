@@ -4,3 +4,5 @@ __pycache__/
 outputs
 .venv
 __pycache__/
+/data
+/submission
