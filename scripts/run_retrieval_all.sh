@@ -121,7 +121,7 @@ run_pair () {
     $([ "${NORMALIZE}" = true ] && echo --normalize) \
     $([ "${USE_FAISS}" = true ] && echo --use_faiss) \
     $([ "${FAISS_GPU}" = true ] && echo --faiss_gpu) \
-    # --out_json "${OUT_JSON}"
+    --out_json "${OUT_JSON}"
   local RC=$?
   set +x
   if [[ $RC -ne 0 ]]; then
