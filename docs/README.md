@@ -1,4 +1,9 @@
+<div align="center">
+
+<img src="https://github.com/sergio-alberto-dlm/visual_localization/blob/master/docs/cover.jpg" width="400"/>
+
 # 📷 Visual Localization: MegaLoc + VGGT on CroCoDL
+</div>
 
 This project implements a **cross device visual localization pipeline** leveraging the strong semantic embeddings of **MegaLoc** and the foundational model **VGGT**.  
 It is designed for the **CroCoDL dataset**, and provides tools for:
