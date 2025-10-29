@@ -14,7 +14,7 @@ def parse_args():
         "--dataset_path",
         type=str,
         required=True,
-        help="Path to the dataset file or directory"
+        help="Path to the dataset directory"
     )
     parser.add_argument(
         "--output_path",

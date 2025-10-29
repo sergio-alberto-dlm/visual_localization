@@ -132,8 +132,74 @@ Key arguments:
 
 * --queries-pose: Path to trajectories.txt of retrieve queries
 
+### 4. Retrieval Reranking (optional)
+
+Rerank top-k most similar images using LightGlue + SuperPoint number of inliers. SuperPoint finds local features and LightGlue matches them per image pairs (query and each of the top-k retrieved images), then, RANSAC over geometry check is used to count inliers and outliers.
+
+First, compute the local features.
+
+#### 4.1 Extract local features
+
+```bash
+python tasks/local_feats.py \
+  --dataset_path <path_to_dataset> \
+  --output_path <path_to_output_directory> \
+  --building "<building/location>"
+```
+
+arguments:
+  * --dataset_path: path to dataset root. i.e., containing directory of both SUCCULLENT and HYDRO.
+
+  * --output_path: Path to the directory to store all local features.
+
+  * --building: Scene. Admits HYDRO or SUCCULENT
+
+#### 4.2 Reranking with number of inliers.
+
+Once the local features are computed, you may rerank each retrieval output with the following command:
+
+```bash
+python tasks/rerank_retrieval.py \
+  --feats_dir <local_features_directory> \
+  --output_dir <dir_for_reranked_jsons> \
+  --input_json <topk_json_to_process>
+```
+
+Arguments:
+
+* --feats_dir: Path to directory where all local features live. Same as <output_path> of step 4.1.
+
+* --output_dir: Path to directory where all reranked json will be dumped.
+
+* --input_json: Path of json with top-k retrieval data to rerank.
+
+### 5. Pose Estimation plus VGGT
+
+With top-k image retrieval data, either directly from step 2 (MegaLoc) or step 4 (reranking), run the wollowing command to compute the poses of each image query. You must run it for each topk json.
+
+```bash
+python tasks/pose_estimation.py \
+  --dataset_path <path_to_dataset> \
+  --output_dir <dir_for_pose_jsons> \
+  --input_json <path_to_topk_json>
+```
+
+Arguments:
+
+* --dataset_path: path to dataset root. i.e., containing directory of both SUCCULLENT and HYDRO.
+
+* --output_dir: Path to directory where all pose estimation jsons will be dumped.
+
+* --input_json: Path of individual json with topk images to process.
+
+
 ## 🙏 Acknowledgments
 
 - [**CroCoDL benchmark**](https://github.com/cvg/crocodl-benchmark/tree/main) – dataset and tools for large-scale visual localization  
 - [**FAISS**](https://github.com/facebookresearch/faiss) – efficient similarity search library  
 - [**MegaLoc**](https://github.com/gmberton/megaloc) -- embeddings extractor
+- [**LightGlue**](https://github.com/cvg/LightGlue) -- Local features extractor and matching.
+- [**VGGT**](https://vgg-t.github.io/) -- Foundation model for 3D reconstruction.
+
+We acknowledge Jean Bernard Hayet for the infraestrcuture support.
+
